@@ -1,0 +1,8 @@
+- get default adresse
+ip route | awk '/default/ {print $3; exit}'
+
+get dfalut interface
+route | grep '^default' | grep -o '[^ ]*$'
+
+- adresse ipavec CIDR
+ip -4 -o addr show $$$ | awk '{print $4}'

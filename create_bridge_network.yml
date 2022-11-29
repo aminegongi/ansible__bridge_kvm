@@ -1,0 +1,50 @@
+---
+- name: Config Workers - get join cmd
+  hosts: localhost
+  become: yes
+  tasks:
+    - name: get default adresse
+      shell: ip route | awk '/default/ {print $3; exit}'
+      register: default_adresse
+    - debug:
+        msg: "{{ default_adresse.stdout }}"
+
+    - name: get default interface
+      shell: route | grep '^default' | grep -o '[^ ]*$'
+      register: default_interface
+    - debug:
+        msg: "{{ default_interface.stdout }}"
+
+    - name: get ip adress and CIDR
+      shell: ip -4 -o addr show {{default_interface.stdout}} | awk '{print $4}'
+      register: ip_adress_cidr
+    - debug:
+        msg: "{{ ip_adress_cidr.stdout }}"
+    
+    - name: get ethernet interface
+      shell: nmcli device status | awk '{if($2=="ethernet" && ($3=="connected" || $3=="connecté"))print $1}'
+      register: ethernet_interface
+    - debug:
+        msg: "{{ ethernet_interface.stdout }}"
+
+    - name: Generation fichier network config 
+      template:
+        src: "template_j2/00-netcfg.yaml.j2"
+        dest: "/etc/netplan/00-netcfg-chikipiki.yaml"
+
+    - name : exec netplan apply
+      shell: netplan apply
+
+    - name: Generation fichier network config 
+      template:
+        src: "template_j2/bridge-chikipiki-nok.xml.j2"
+        dest: "bridge-chikipiki-nok.xml"
+
+    - name : exec virsh define 
+      shell: virsh net-define bridge-chikipiki-nok.xml
+    
+    - name : exec virsh start 
+      shell: virsh net-start bridge-chikipiki-nok
+    
+    - name : exec virsh autostart 
+      shell: virsh net-autostart bridge-chikipiki-nok

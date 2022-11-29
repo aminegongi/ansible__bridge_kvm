@@ -1,0 +1,18 @@
+network:
+  ethernets:
+    {{ ethernet_interface.stdout }}:
+      dhcp4: no
+      dhcp6: no
+  # add configuration for bridge interface
+  bridges:
+    {{ default_interface.stdout }}:
+      interfaces: [{{ ethernet_interface.stdout }}]
+      dhcp4: no
+      addresses: [{{ ip_adress_cidr.stdout }}]
+      gateway4: {{ default_adresse.stdout }}
+      nameservers:
+        addresses: [{{ default_adresse.stdout }}]
+      parameters:
+        stp: false
+      dhcp6: no
+  version: 2
